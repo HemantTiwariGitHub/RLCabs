@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 # Import routines
 
 import numpy as np
@@ -7,101 +9,102 @@ from itertools import permutations
 from itertools import product
 
 # Defining hyperparameters
-m = 5 # number of cities, ranges from 1 ..... m
-t = 24 # number of hours, ranges from 0 .... t-1
+
+m = 5  # number of cities, ranges from 1 ..... m
+t = 24  # number of hours, ranges from 0 .... t-1
 d = 7  # number of days, ranges from 0 ... d-1
-C = 5 # Per hour fuel and other costs
-R = 9 # per hour revenue from a passenger
+C = 5  # Per hour fuel and other costs
+R = 9  # per hour revenue from a passenger
 
 
-class CabDriver():
+class CabDriver:
 
     def __init__(self):
         """initialise your state and define your action space and state space"""
-        self.action_space = createActionSpace()
-        self.state_space = createStateSpace()
-        self.state_init = initializeState()
+
+        self.action_space = self.createActionSpace()
+        self.state_space = self.createStateSpace()
+        self.state_init = self.initializeState()
 
         # Start the first round
+
         self.reset()
 
-
     def createActionSpace(self):
-        actionSpace =  list(permutations([i for i in range(m)], 2))
-        actionSpace.append((0,0))
+        actionSpace=[]
+        actionSpace.append((0, 0))
+        actionSpace = list(permutations([i for i in range(m)], 2))
+
         return actionSpace
 
     def createStateSpace(self):
-        locations = [i for i in range(m + 1)] #additonal location for driving
+        locations = [i for i in range(m)]
         days = [i for i in range(d)]
         hours = [i for i in range(t)]
 
-        stateSpace =  product(locations, days, hours)
+        stateSpace = product(locations, days, hours)
         return list(stateSpace)
 
     def initializeState(self):
         randomInitialState = random.choice(self.state_space)
         return randomInitialState
 
-
-    ## Encoding state (or state-action) for NN input
-
     def state_encod_arch1(self, state):
-        """convert the state into a vector so that it can be fed to the NN. This method converts a given state into a vector format. Hint: The vector is of size m + t + d."""
+        location = state[0]
+        day = state[1]
+        hour = state[2]
 
-        return state_encod
+        encodedState = np.zeros((m + d + t, ), dtype=int)
+        encodedState[state[0]] = 1
+        encodedState[m + state[1]] = 1
+        encodedState[m + d + state[2]] = 1
+
+        return encodedState
 
 
-    # Use this function if you are using architecture-2 
-    # def state_encod_arch2(self, state, action):
-    #     """convert the (state-action) into a vector so that it can be fed to the NN. This method converts a given state-action pair into a vector format. Hint: The vector is of size m + t + d + m + m."""
-
-        
-    #     return state_encod
-
-
-    ## Getting number of requests
 
     def requests(self, state):
-        """Determining the number of requests basis the location. 
+        """Determining the number of requests basis the location.
         Use the table specified in the MDP and complete for rest of the locations"""
+
         location = state[0]
-        if location == 0:
-            requests = np.random.poisson(2)
+        requests = self.getRequests(location)
+
+        if requests > 15:
+            requests = 15
+
+        possible_actions_index = random.sample(range(1, (m - 1) * m + 1), requests)  # (0,0) is not considered as customer request
+        actions = [self.action_space[i] for i in possible_actions_index]
+
+        actions.append([0, 0])
+
+        return (possible_actions_index, actions)
+
+    def getRequests(self, loc):
+        lambdaVal = [2, 12, 4, 7, 8]
+        requests = np.random.poisson(lambdaVal[loc])
+        return requests
 
 
-
-
-
-
-
-
-        if requests >15:
-            requests =15
-
-        possible_actions_index = random.sample(range(1, (m-1)*m +1), requests) # (0,0) is not considered as customer request
-        actions = [self.action_space[i] for i in possible_actions_idx]
-
-        
-        actions.append([0,0])
-
-        return possible_actions_index,actions   
-
-
-
-    def reward_func(self, state, action, Time_matrix):
+    def reward_func(
+        self,
+        state,
+        action,
+        Time_matrix,
+        ):
         """Takes in state, action and Time-matrix and returns the reward"""
+
         return reward
 
-
-
-
-    def next_state_func(self, state, action, Time_matrix):
+    def next_state_func(
+        self,
+        state,
+        action,
+        Time_matrix,
+        ):
         """Takes state and action as input and returns next state"""
+
         return next_state
 
-
-
-
     def reset(self):
-        return self.action_space, self.state_space, self.state_init
+        return (self.action_space, self.state_space, self.state_init)
