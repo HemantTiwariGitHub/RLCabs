@@ -86,25 +86,60 @@ class CabDriver:
         return requests
 
 
-    def reward_func(
-        self,
-        state,
-        action,
-        Time_matrix,
-        ):
+    def reward_func(self, state, action, Time_matrix):
         """Takes in state, action and Time-matrix and returns the reward"""
+        reward = 0
+        cabLocation = state[0]
+        day = state[1]
+        hour = state[2]
+        sourceLocation = action[0]
+        targetLocation = action[1]
+
+        noRide = False
+        if ((sourceLocation == 0) && (targetLocation == 0)):
+            noRide = True
+
+        if (noRide):
+            reward =  -C
+
+        else :
+            timeToSource = Time_matrix[cabLocation][sourceLocation][hour][day]
+            newDay, newHour = self.getNextTime(day, hour, timeToSource)
+            timeOfRide = Time_matrix[sourceLocation][targetLocation][newHour][newDay]
+            reward   = (R * timeOfRide) -C (timeOfRide + timeToSource)
 
         return reward
 
-    def next_state_func(
-        self,
-        state,
-        action,
-        Time_matrix,
-        ):
-        """Takes state and action as input and returns next state"""
+    def getNextTime(self, day, hour, timeToSource):
+        tempHour = hour + timeToSource
+        nextDay = (day + (int)(tempHour/24))%7
+        nextHour = tempHour%24
+        return nextDay,nextHour
 
-        return next_state
+    def next_state_func(self, state, action, Time_matrix):
+        """Takes state and action as input and returns next state"""
+        cabLocation = state[0]
+        day = state[1]
+        hour = state[2]
+        sourceLocation = action[0]
+        targetLocation = action[1]
+
+        noRide = False
+        if ((sourceLocation == 0) & & (targetLocation == 0)):
+            noRide = True
+
+        if (noRide):
+            return state
+
+        # time to source plus time to ride
+        timeToSource = Time_matrix[cabLocation][sourceLocation][hour][day]
+        newDay, newHour = self.getNextTime(day, hour, timeToSource)
+        timeOfRide = Time_matrix[sourceLocation][targetLocation][newHour][newDay]
+        afterRideDay, afterRideHour = self.getNextTime(newDay, newHour, timeOfRide)
+
+        nextState = [targetLocation, afterRideDay, afterRideHour]
+
+        return nextState
 
     def reset(self):
         return (self.action_space, self.state_space, self.state_init)
