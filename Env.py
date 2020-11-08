@@ -96,7 +96,7 @@ class CabDriver:
         targetLocation = action[1]
 
         noRide = False
-        if ((sourceLocation == 0) && (targetLocation == 0)):
+        if ((sourceLocation == 0) & (targetLocation == 0)):
             noRide = True
 
         if (noRide):
@@ -125,7 +125,7 @@ class CabDriver:
         targetLocation = action[1]
 
         noRide = False
-        if ((sourceLocation == 0) & & (targetLocation == 0)):
+        if ((sourceLocation == 0) &  (targetLocation == 0)):
             noRide = True
 
         if (noRide):
