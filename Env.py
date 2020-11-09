@@ -3,7 +3,6 @@
 # Import routines
 
 import numpy as np
-import math
 import random
 from itertools import permutations
 from itertools import product
@@ -31,10 +30,7 @@ class CabDriver:
         self.reset()
 
     def createActionSpace(self):
-        actionSpace=[]
-        actionSpace.append((0, 0))
-        actionSpace = list(permutations([i for i in range(m)], 2))
-
+        actionSpace = [(0,0)]  +  list(permutations([i for i in range(m)], 2))
         return actionSpace
 
     def createStateSpace(self):
@@ -73,10 +69,10 @@ class CabDriver:
         if requests > 15:
             requests = 15
 
-        possible_actions_index = random.sample(range(1, (m - 1) * m + 1), requests)  # (0,0) is not considered as customer request
+        possible_actions_index = random.sample(range(1, (m - 1) * m + 1), requests) +[0] # (0,0) is not considered as customer request
         actions = [self.action_space[i] for i in possible_actions_index]
 
-        actions.append([0, 0])
+
 
         return (possible_actions_index, actions)
 
@@ -94,6 +90,7 @@ class CabDriver:
         hour = state[2]
         sourceLocation = action[0]
         targetLocation = action[1]
+        #print("CST Locations: ", cabLocation,sourceLocation,targetLocation)
 
         noRide = False
         if ((sourceLocation == 0) & (targetLocation == 0)):
@@ -103,10 +100,11 @@ class CabDriver:
             reward =  -C
 
         else :
-            timeToSource = Time_matrix[cabLocation][sourceLocation][hour][day]
+            timeToSource = (int)(Time_matrix[cabLocation][sourceLocation][hour][day])
             newDay, newHour = self.getNextTime(day, hour, timeToSource)
-            timeOfRide = Time_matrix[sourceLocation][targetLocation][newHour][newDay]
-            reward   = (R * timeOfRide) -C (timeOfRide + timeToSource)
+            #print("Hours: ", day, hour, timeToSource, newDay,newHour)
+            timeOfRide = (int)(Time_matrix[sourceLocation][targetLocation][newHour][newDay])
+            reward   = (R * timeOfRide) -C * (timeOfRide + timeToSource)
 
         return reward
 
@@ -124,22 +122,26 @@ class CabDriver:
         sourceLocation = action[0]
         targetLocation = action[1]
 
+        reward = self.reward_func(state, action, Time_matrix)
+
         noRide = False
         if ((sourceLocation == 0) &  (targetLocation == 0)):
             noRide = True
 
         if (noRide):
-            return state
+            return state, reward, 1
 
         # time to source plus time to ride
-        timeToSource = Time_matrix[cabLocation][sourceLocation][hour][day]
+        timeToSource = (int)(Time_matrix[cabLocation][sourceLocation][hour][day])
         newDay, newHour = self.getNextTime(day, hour, timeToSource)
-        timeOfRide = Time_matrix[sourceLocation][targetLocation][newHour][newDay]
+        timeOfRide = (int)(Time_matrix[sourceLocation][targetLocation][newHour][newDay])
         afterRideDay, afterRideHour = self.getNextTime(newDay, newHour, timeOfRide)
 
         nextState = [targetLocation, afterRideDay, afterRideHour]
+        timePassed  = timeToSource + timeOfRide
 
-        return nextState
+
+        return nextState, reward, timePassed
 
     def reset(self):
         return (self.action_space, self.state_space, self.state_init)
